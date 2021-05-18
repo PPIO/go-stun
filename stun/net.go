@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	numRetransmit  = 9
+	numRetransmit  = 5
 	defaultTimeout = 400
 	maxTimeout     = 1600
 	maxPacketSize  = 1024
@@ -74,7 +74,7 @@ func (c *Client) send(pkt *packet, conn net.PacketConn, addr net.Addr) (*respons
 		if err != nil {
 			return nil, err
 		}
-		if timeout <= maxTimeout {
+		if timeout < maxTimeout {
 			timeout *= 2
 		}
 		for {
