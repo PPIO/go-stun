@@ -64,5 +64,8 @@ func (h *Host) TransportAddr() string {
 
 // String returns the string representation of the host address.
 func (h *Host) String() string {
+	if h == nil {
+		return "<nil>"
+	}
 	return h.TransportAddr()
 }
