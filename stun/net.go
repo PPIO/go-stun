@@ -24,7 +24,7 @@ import (
 
 const (
 	numRetransmit  = 9
-	defaultTimeout = 100
+	defaultTimeout = 400
 	maxTimeout     = 1600
 	maxPacketSize  = 1024
 )
@@ -36,18 +36,19 @@ func (c *Client) sendBindingReq(conn net.PacketConn, addr net.Addr, changeIP boo
 		return nil, err
 	}
 	pkt.types = typeBindingRequest
-	attribute := newSoftwareAttribute(c.softwareName)
-	pkt.addAttribute(*attribute)
+	var attribute *attribute
+	// attribute := newSoftwareAttribute(c.softwareName)
+	// pkt.addAttribute(*attribute)
 	if changeIP || changePort {
 		attribute = newChangeReqAttribute(changeIP, changePort)
 		pkt.addAttribute(*attribute)
 	}
 	// length of fingerprint attribute must be included into crc,
 	// so we add it before calculating crc, then subtract it after calculating crc.
-	pkt.length += 8
-	attribute = newFingerprintAttribute(pkt)
-	pkt.length -= 8
-	pkt.addAttribute(*attribute)
+	// pkt.length += 8
+	// attribute = newFingerprintAttribute(pkt)
+	// pkt.length -= 8
+	// pkt.addAttribute(*attribute)
 	// Send packet.
 	return c.send(pkt, conn, addr)
 }
@@ -73,7 +74,7 @@ func (c *Client) send(pkt *packet, conn net.PacketConn, addr net.Addr) (*respons
 		if err != nil {
 			return nil, err
 		}
-		if timeout < maxTimeout {
+		if timeout <= maxTimeout {
 			timeout *= 2
 		}
 		for {
