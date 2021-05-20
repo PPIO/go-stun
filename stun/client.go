@@ -20,9 +20,19 @@ import (
 	"strconv"
 )
 
+type ClientConfig struct {
+	DisableSoftware    bool
+	DisableFingerprint bool
+}
+
+func NewClientConfig() *ClientConfig {
+	return &ClientConfig{}
+}
+
 // Client is a STUN client, which can be set STUN server address and is used
 // to discover NAT type.
 type Client struct {
+	config       *ClientConfig
 	serverAddr   string
 	softwareName string
 	conn         net.PacketConn
@@ -31,8 +41,9 @@ type Client struct {
 
 // NewClient returns a client without network connection. The network
 // connection will be build when calling Discover function.
-func NewClient() *Client {
+func NewClient(config *ClientConfig) *Client {
 	c := new(Client)
+	c.config = config
 	c.SetSoftwareName(DefaultSoftwareName)
 	c.logger = NewLogger()
 	return c
@@ -40,9 +51,10 @@ func NewClient() *Client {
 
 // NewClientWithConnection returns a client which uses the given connection.
 // Please note the connection should be acquired via net.Listen* method.
-func NewClientWithConnection(conn net.PacketConn) *Client {
+func NewClientWithConnection(conn net.PacketConn, config *ClientConfig) *Client {
 	c := new(Client)
 	c.conn = conn
+	c.config = config
 	c.SetSoftwareName(DefaultSoftwareName)
 	c.logger = NewLogger()
 	return c

@@ -26,10 +26,15 @@ func main() {
 	var v = flag.Bool("v", false, "verbose mode")
 	var vv = flag.Bool("vv", false, "double verbose mode (includes -v)")
 	var vvv = flag.Bool("vvv", false, "triple verbose mode (includes -v and -vv)")
+	var noSoftware = flag.Bool("no-software", false, "disable software attribute")
+	var noFingerprint = flag.Bool("no-fingerprint", false, "disable fingerprint attribute")
 	flag.Parse()
 
 	// Creates a STUN client. NewClientWithConnection can also be used if you want to handle the UDP listener by yourself.
-	client := stun.NewClient()
+	config := stun.NewClientConfig()
+	config.DisableSoftware = *noSoftware
+	config.DisableFingerprint = *noFingerprint
+	client := stun.NewClient(config)
 	// The default addr (stun.DefaultServerAddr) will be used unless we call SetServerAddr.
 	client.SetServerAddr(*serverAddr)
 	// Non verbose mode will be used by default unless we call SetVerbose(true) or SetVVerbose(true).
