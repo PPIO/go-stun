@@ -36,12 +36,12 @@ func main() {
 	config.DisableFingerprint = *noFingerprint
 	client := stun.NewClient(config)
 	// The default addr (stun.DefaultServerAddr) will be used unless we call SetServerAddr.
-	client.SetServerAddr(*serverAddr)
+	// client.SetServerAddr(*serverAddr)
 	// Non verbose mode will be used by default unless we call SetVerbose(true) or SetVVerbose(true).
 	client.SetVerbose(*v || *vv || *vvv)
 	client.SetVVerbose(*vv || *vvv)
 	// Discover the NAT and return the result.
-	nat, host, err := client.Discover()
+	nat, host, err := client.Discover(*serverAddr)
 	if err != nil {
 		fmt.Println(err)
 		return

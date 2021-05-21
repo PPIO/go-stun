@@ -17,7 +17,6 @@ package stun
 import (
 	"errors"
 	"net"
-	"strconv"
 )
 
 type ClientConfig struct {
@@ -32,8 +31,8 @@ func NewClientConfig() *ClientConfig {
 // Client is a STUN client, which can be set STUN server address and is used
 // to discover NAT type.
 type Client struct {
-	config       *ClientConfig
-	serverAddr   *net.UDPAddr
+	config *ClientConfig
+	// serverAddr   *net.UDPAddr
 	softwareName string
 	conn         net.PacketConn
 	logger       *Logger
@@ -72,20 +71,20 @@ func (c *Client) SetVVerbose(v bool) {
 	c.logger.SetInfo(v)
 }
 
-// SetServerHost allows user to set the STUN hostname and port.
-func (c *Client) SetServerHost(host string, port int) error {
-	return c.SetServerAddr(net.JoinHostPort(host, strconv.Itoa(port)))
-}
+// // SetServerHost allows user to set the STUN hostname and port.
+// func (c *Client) SetServerHost(host string, port int) error {
+// 	return c.SetServerAddr(net.JoinHostPort(host, strconv.Itoa(port)))
+// }
 
-// SetServerAddr allows user to set the transport layer STUN server address.
-func (c *Client) SetServerAddr(address string) error {
-	udpAddr, err := net.ResolveUDPAddr("udp", address)
-	if err != nil {
-		return err
-	}
-	c.serverAddr = udpAddr
-	return nil
-}
+// // SetServerAddr allows user to set the transport layer STUN server address.
+// func (c *Client) SetServerAddr(address string) error {
+// 	udpAddr, err := net.ResolveUDPAddr("udp", address)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	c.serverAddr = udpAddr
+// 	return nil
+// }
 
 // SetSoftwareName allows user to set the name of the software, which is used
 // for logging purpose (NOT used in the current implementation).
@@ -93,14 +92,22 @@ func (c *Client) SetSoftwareName(name string) {
 	c.softwareName = name
 }
 
-// Discover contacts the STUN server and gets the response of NAT type, host
-// for UDP punching.
-func (c *Client) Discover() (NATType, *Host, error) {
-	if c.serverAddr == nil {
-		if err := c.SetServerAddr(DefaultServerAddr); err != nil {
-			return NATError, nil, err
-		}
+func (c *Client) Discover(serverAddr string) (NATType, *Host, error) {
+	serverUDPAddr, err := net.ResolveUDPAddr("udp", serverAddr)
+	if err != nil {
+		return NATError, nil, err
 	}
+	return c.DiscoverAddr(serverUDPAddr)
+}
+
+// DiscoverAddr contacts the STUN server and gets the response of NAT type, host
+// for UDP punching.
+func (c *Client) DiscoverAddr(serverAddr *net.UDPAddr) (NATType, *Host, error) {
+	// if c.serverAddr == nil {
+	// 	if err := c.SetServerAddr(DefaultServerAddr); err != nil {
+	// 		return NATError, nil, err
+	// 	}
+	// }
 	// serverUDPAddr, err := net.ResolveUDPAddr("udp", c.serverAddr)
 	// if err != nil {
 	// 	return NATError, nil, err
@@ -116,26 +123,34 @@ func (c *Client) Discover() (NATType, *Host, error) {
 		}
 		defer conn.Close()
 	}
-	return c.discover(conn, c.serverAddr)
+	return c.discover(conn, serverAddr)
+}
+
+func (c *Client) Keepalive(serverAddr string) (*Host, error) {
+	serverUDPAddr, err := net.ResolveUDPAddr("udp", serverAddr)
+	if err != nil {
+		return nil, err
+	}
+	return c.KeepaliveAddr(serverUDPAddr)
 }
 
 // Keepalive sends and receives a bind request, which ensures the mapping stays open
 // Only applicable when client was created with a connection.
-func (c *Client) Keepalive() (*Host, error) {
+func (c *Client) KeepaliveAddr(serverAddr *net.UDPAddr) (*Host, error) {
 	if c.conn == nil {
 		return nil, errors.New("no connection available")
 	}
-	if c.serverAddr == nil {
-		if err := c.SetServerAddr(DefaultServerAddr); err != nil {
-			return nil, err
-		}
-	}
+	// if c.serverAddr == nil {
+	// 	if err := c.SetServerAddr(DefaultServerAddr); err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 	// serverUDPAddr, err := net.ResolveUDPAddr("udp", c.serverAddr)
 	// if err != nil {
 	// 	return nil, err
 	// }
 
-	resp, err := c.test1(c.conn, c.serverAddr)
+	resp, err := c.test1(c.conn, serverAddr)
 	if err != nil {
 		return nil, err
 	}
